@@ -51,14 +51,25 @@ resource "esxi_guest" "okd4-bootstrap" {
   boot_disk_type = "thin"
   disk_store     = var.datastore
   guestos        = "fedora-64"
-  power          = "off"
+  power          = "on"
   virthwver      = "13"
 
   network_interfaces {
     mac_address     = "00:50:56:01:01:01"
     virtual_network = var.okd_network
+    nic_type        = "vmxnet3"
   }
-  depends_on = [null_resource.esxi_network]
+
+  network_interfaces {
+    mac_address     = "00:50:56:01:02:01"
+    virtual_network = var.home_network
+  }
+
+  notes          = "Built using Terraform"
+
+  clone_from_vm  = "/Template-CentOS-8"
+
+#  depends_on = [null_resource.esxi_network]
 }
 
 resource "esxi_guest" "okd4-machines" {
