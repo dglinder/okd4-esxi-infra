@@ -9,7 +9,7 @@ variable "esxi_username" {
 
 variable "esxi_password" {
     type    = string
-    default = "q7-19ezx"
+    default = "APassword"
 }
 
 variable "datastore" {
@@ -47,5 +47,5 @@ variable "ssh_port" {
 }
 variable "ssh_passwd" {
     type    = string
-    default = "APassword"
+    default = "123NewS!@#"
 }
