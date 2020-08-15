@@ -97,7 +97,7 @@ resource "esxi_guest" "okd4-bootstrap" {
       type  = "ssh"
       user  = var.ssh_user
       password = var.ssh_passwd
-      host  = "192.168.65.242"
+      host  = self.ip_address #"192.168.65.242"
     }
 
     source = "script.sh"
@@ -109,7 +109,7 @@ resource "esxi_guest" "okd4-bootstrap" {
       type  = "ssh"
       user  = var.ssh_user
       password = var.ssh_passwd
-      host  = "192.168.65.242"
+      host  = self.ip_address #"192.168.65.242"
     }
 
     inline = [
