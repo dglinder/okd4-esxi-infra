@@ -21,7 +21,10 @@ resource "null_resource" "esxi_network" {
   }
 
   connection {
-    host = self.triggers.host
+    type  = "ssh"
+    user  = "root" # var.esxi_username
+    password = "q7-19ezx" # var.esxi_password
+    host  = "esx.lab.linder.org" # var.esxi_host
   }
 
   provisioner "remote-exec" {
