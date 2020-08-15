@@ -98,7 +98,7 @@ resource "null_resource" "remscript" {
   provisioner "file" {
     connection {
       type  = "ssh"
-      user  = var.ssh_user #"root"
+      user  = var.ssh_user
       password = var.ssh_passwd
       host  = "192.168.65.242"
     }
@@ -110,7 +110,7 @@ resource "null_resource" "remscript" {
   provisioner "remote-exec" {
     connection {
       type  = "ssh"
-      user  = var.ssh_user #"root"
+      user  = var.ssh_user
       password = var.ssh_passwd
       host  = "192.168.65.242"
     }
