@@ -96,28 +96,29 @@ resource "esxi_guest" "okd4-bootstrap" {
 
 resource "null_resource" "remscript" {
   provisioner "file" {
-    source = "script.sh"
-    destination = "/tmp/script.sh"
-
     connection {
       type  = "ssh"
-      user  = "root"
+      user  = var.ssh_user #"root"
       password = "123NewS!@#"
       host  = "192.168.65.242"
     }
+
+    source = "script.sh"
+    destination = "/tmp/script.sh"
   }
 
   provisioner "remote-exec" {
     connection {
       type  = "ssh"
-      user  = "root"
+      user  = var.ssh_user #"root"
       password = "123NewS!@#"
       host  = "192.168.65.242"
     }
 
     inline = [
       "date | tee -a /tmp/gothere",
-      "yum install ansible",
+      "dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm",
+      "yum install -y ansible",
       "chmod +x /tmp/script.sh",
       "/tmp/script.sh",
     ]
