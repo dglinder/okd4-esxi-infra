@@ -89,15 +89,13 @@ resource "esxi_guest" "okd4-bootstrap" {
   notes = "Built using Terraform"
   clone_from_vm = "/Template-CentOS-8"
   #depends_on = [null_resource.esxi_network]
-# }
-# 
-# resource "null_resource" "remscript" {
+
   provisioner "file" {
     connection {
       type  = "ssh"
       user  = var.ssh_user
       password = var.ssh_passwd
-      host  = self.ip_address #"192.168.65.242"
+      host  = self.ip_address
     }
 
     source = "script.sh"
@@ -109,7 +107,7 @@ resource "esxi_guest" "okd4-bootstrap" {
       type  = "ssh"
       user  = var.ssh_user
       password = var.ssh_passwd
-      host  = self.ip_address #"192.168.65.242"
+      host  = self.ip_address
     }
 
     inline = [
