@@ -87,14 +87,11 @@ resource "esxi_guest" "okd4-bootstrap" {
   }
 
   notes = "Built using Terraform"
-
   clone_from_vm = "/Template-CentOS-8"
-
   #depends_on = [null_resource.esxi_network]
-
-}
-
-resource "null_resource" "remscript" {
+# }
+# 
+# resource "null_resource" "remscript" {
   provisioner "file" {
     connection {
       type  = "ssh"
