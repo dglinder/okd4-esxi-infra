@@ -99,7 +99,7 @@ resource "null_resource" "remscript" {
     connection {
       type  = "ssh"
       user  = var.ssh_user #"root"
-      password = "123NewS!@#"
+      password = var.ssh_passwd
       host  = "192.168.65.242"
     }
 
@@ -111,7 +111,7 @@ resource "null_resource" "remscript" {
     connection {
       type  = "ssh"
       user  = var.ssh_user #"root"
-      password = "123NewS!@#"
+      password = var.ssh_passwd
       host  = "192.168.65.242"
     }
 

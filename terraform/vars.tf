@@ -45,3 +45,7 @@ variable "ssh_port" {
     type    = number
     default = 22
 }
+variable "ssh_passwd" {
+    type    = string
+    default = "APassword"
+}
