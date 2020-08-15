@@ -2,4 +2,5 @@ terraform.*
 .terraform
 personal-notes
 terraform/vars.tf
-
+vars.tf
+**/vars.tf
