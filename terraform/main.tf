@@ -1,3 +1,7 @@
+# Execution example:
+# terraform destroy -auto-approve && terraform plan && \
+# terraform apply -auto-approve -target=esxi_guest.okd4-bootstrap
+#
 terraform {
   required_version = ">= 0.12"
   required_providers {
