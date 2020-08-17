@@ -15,6 +15,7 @@ terraform {
   }
 }
 
+# Define our variables here.  Set them in terraform.tfvars
 variable "my_esxi_hostname" { type = string }
 variable "my_esxi_username" { type = string }
 variable "my_esxi_password" { type = string }
