@@ -43,18 +43,23 @@ resource "null_resource" "esxi_network" {
     netname    = var.okd_network
     switch     = var.vswitch
     host       = var.my_esxi_hostname
+    user  = var.my_esxi_username
+    password = var.my_esxi_password
   }
 
+  # WHY DO YOU MAKE ME PUT THESE IN HERE?!?!?
   connection {
     type  = "ssh"
-    user  = "root" # var.esxi_username
-    password = "q7-19ezx" # var.esxi_password
-    host  = "esx.lab.linder.org" # var.esxi_host
+    user  = "root"
+    password = "APassword"
+    host  = "esx.lab.linder.org"
   }
 
   provisioner "remote-exec" {
     inline = [
+      "echo Setting up portgroup:${var.okd_network}, on ${var.vswitch}.",
       "esxcli network vswitch standard portgroup add --portgroup-name=${var.okd_network} --vswitch-name=${var.vswitch}",
+      "echo Setting up portgroup:${var.okd_network}, on VLAN ${var.vlan_id}.",
       "esxcli network vswitch standard portgroup set -p ${var.okd_network} --vlan-id ${var.vlan_id}",
     ]
   }
@@ -62,6 +67,7 @@ resource "null_resource" "esxi_network" {
   provisioner "remote-exec" {
     when = destroy
     inline = [
+      "echo Destroying up portgroup:${self.triggers.netname}, on ${self.triggers.switch}.",
       "esxcli network vswitch standard portgroup remove --portgroup-name=${self.triggers.netname} --vswitch-name=${self.triggers.switch}",
     ]
   }
@@ -76,7 +82,7 @@ provider "esxi" {
 }
 
 output "guest_info" {
- value = esxi_guest.okd4-bootstrap.id
+ value = esxi_guest.okd4-bootstrap.ip_address
 }
 
 # generate inventory file for Ansible
@@ -100,7 +106,7 @@ resource "esxi_guest" "okd4-bootstrap" {
   boot_disk_type = "thin"
   disk_store     = var.datastore
   guestos        = "fedora-64"
-  power          = "off"
+  power          = "on"
   virthwver      = "13"
 
   network_interfaces {
@@ -115,7 +121,7 @@ resource "esxi_guest" "okd4-bootstrap" {
   }
 
   notes = "Built using Terraform"
-  #clone_from_vm = "/Template-CentOS-8"
+  clone_from_vm = "/Template-CentOS-8"
   depends_on = [null_resource.esxi_network]
 
   # provisioner "file" {
