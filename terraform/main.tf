@@ -3,10 +3,10 @@
 # terraform apply -auto-approve -target=esxi_guest.okd4-bootstrap
 #
 terraform {
-  required_version = ">= 0.12"
+  required_version = ">= 0.13"
   required_providers {
     esxi = {
-      source  = "josenk/esxi"
+      source  = "registry.terraform.io/josenk/esxi"
       version = "~> 1.7.1"
     }
     null = {
@@ -54,9 +54,9 @@ provider "esxi" {
   esxi_password = var.esxi_password
 }
 
-#output "vars" {
-#  value = ["${var.esxi_guest}"]
-#}
+output "guest_info" {
+ value = esxi_guest.okd4-bootstrap.id
+}
 
 # generate inventory file for Ansible
 #resource "local_file" "hosts_cfg" {
@@ -79,7 +79,7 @@ resource "esxi_guest" "okd4-bootstrap" {
   boot_disk_type = "thin"
   disk_store     = var.datastore
   guestos        = "fedora-64"
-  power          = "on"
+  power          = "off"
   virthwver      = "13"
 
   network_interfaces {
@@ -94,37 +94,37 @@ resource "esxi_guest" "okd4-bootstrap" {
   }
 
   notes = "Built using Terraform"
-  clone_from_vm = "/Template-CentOS-8"
+  #clone_from_vm = "/Template-CentOS-8"
   depends_on = [null_resource.esxi_network]
 
-  provisioner "file" {
-    connection {
-      type  = "ssh"
-      user  = var.ssh_user
-      password = var.ssh_passwd
-      host  = self.ip_address
-    }
+  # provisioner "file" {
+  #   connection {
+  #     type  = "ssh"
+  #     user  = var.ssh_user
+  #     password = var.ssh_passwd
+  #     host  = self.ip_address
+  #   }
 
-    source = "script.sh"
-    destination = "/tmp/script.sh"
-  }
+  #   source = "script.sh"
+  #   destination = "/tmp/script.sh"
+  # }
 
-  provisioner "remote-exec" {
-    connection {
-      type  = "ssh"
-      user  = var.ssh_user
-      password = var.ssh_passwd
-      host  = self.ip_address
-    }
+  # provisioner "remote-exec" {
+  #   connection {
+  #     type  = "ssh"
+  #     user  = var.ssh_user
+  #     password = var.ssh_passwd
+  #     host  = self.ip_address
+  #   }
 
-    inline = [
-      "date | tee -a /tmp/gothere",
-      "dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm",
-      "yum install -y ansible",
-      "chmod +x /tmp/script.sh",
-      "/tmp/script.sh",
-    ]
-  }
+  #   inline = [
+  #     "date | tee -a /tmp/gothere",
+  #     "dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm",
+  #     "yum install -y ansible",
+  #     "chmod +x /tmp/script.sh",
+  #     "/tmp/script.sh",
+  #   ]
+  # }
 }
 
 resource "esxi_guest" "okd4-machines" {
