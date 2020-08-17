@@ -13,7 +13,7 @@ provider "esxi" {
   esxi_hostport      = "22"
   esxi_hostssl       = "443"
   esxi_username      = "root"
-  esxi_password      = "APassword"
+  esxi_password      = "q7-19ezx"
 }
 
 resource "esxi_guest" "vmtest" {
