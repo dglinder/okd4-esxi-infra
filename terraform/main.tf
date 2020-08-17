@@ -15,13 +15,33 @@ terraform {
   }
 }
 
+variable "my_esxi_hostname" { type = string }
+variable "my_esxi_username" { type = string }
+variable "my_esxi_password" { type = string }
+variable "my_esxi_hostport" {
+  type = number
+  default = 22
+}
+variable "my_esxi_hostssl" {
+  type = string
+  default = 443
+}
+variable "datastore" { type = string }
+variable "vswitch" { type = string }
+variable "vlan_id" { type = number }
+variable "home_network" { type = string }
+variable "okd_network" { type = string }
+variable "guest_vm_ssh_user" { type = string }
+variable "guest_vm_ssh_port" { type = number }
+variable "guest_vm_ssh_passwd" { type = string }
+
 resource "null_resource" "esxi_network" {
   # These triggers are just a workaround to be able to use variables in the destroy provisioner
   triggers = {
     always_run = "${timestamp()}"
     netname    = var.okd_network
     switch     = var.vswitch
-    host       = var.esxi_host
+    host       = var.my_esxi_hostname
   }
 
   connection {
@@ -47,11 +67,11 @@ resource "null_resource" "esxi_network" {
 }
 
 provider "esxi" {
-  esxi_hostname = var.esxi_host
-  esxi_hostport = "22"
-  esxi_hostssl  = "443"
-  esxi_username = var.esxi_username
-  esxi_password = var.esxi_password
+  esxi_hostname = var.my_esxi_hostname
+  esxi_hostport = var.my_esxi_hostport
+  esxi_hostssl  = var.my_esxi_hostssl
+  esxi_username = var.my_esxi_username
+  esxi_password = var.my_esxi_password
 }
 
 output "guest_info" {
