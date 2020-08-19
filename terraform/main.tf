@@ -81,22 +81,32 @@ provider "esxi" {
   esxi_password = var.my_esxi_password
 }
 
-output "guest_info" {
+output "guest_bootstrap" {
  value = esxi_guest.okd4-bootstrap.ip_address
 }
 
-# generate inventory file for Ansible
-#resource "local_file" "hosts_cfg" {
+# # generate inventory file for Ansible
+# resource "local_file" "hosts_cfg" {
 #  content = templatefile("${path.module}/hosts.tpl",
 #    {
-#      #kafka_processors = resources.*.instances.attributes.public_ip
-#      #kafka_processors = instances.*.attributes.ip_address
-#      #kafka_processors = esxi_guest.ip_address
-#      #test_clients = aws_instance.test_client.*.public_ip
+#      bootstrap_ip = esxi_guest.okd4-bootstrap.*.ip_address
+#      bootstrap_hn = esxi_guest.okd4-bootstrap.*.guest_name
+#      control_ip   = esxi_guest.okd4-control.*.ip_address
+#     #  control_hn   = esxi_guest.okd4-control.guest_name
+#      services_ip  = esxi_guest.okd4-services.*.ip_address
+#      services_hn  = esxi_guest.okd4-services.*.guest_name
+#      pfsense_ip   = esxi_guest.okd4-pfsense.*.ip_address
+#      pfsense_hn   = esxi_guest.okd4-pfsense.*.guest_name
 #    }
 #  )
 #  filename = "../hosts.cfg"
-#}
+#  depends_on = [
+#    esxi_guest.okd4-bootstrap,
+#    esxi_guest.okd4-control,
+#    esxi_guest.okd4-services,
+#    esxi_guest.okd4-pfsense
+#  ]
+# }
 
 resource "esxi_guest" "okd4-bootstrap" {
   guest_name     = "okd4-bootstrap"
@@ -118,6 +128,7 @@ resource "esxi_guest" "okd4-bootstrap" {
   network_interfaces {
     mac_address     = "00:50:56:01:02:01"
     virtual_network = var.home_network
+    nic_type        = "vmxnet3"
   }
 
   notes = "Built using Terraform"
@@ -154,11 +165,33 @@ resource "esxi_guest" "okd4-bootstrap" {
   # }
 }
 
-resource "esxi_guest" "okd4-machines" {
+resource "esxi_guest" "okd4-control" {
   for_each = {
     okd4-control-plane-1 = "00:50:56:01:01:02"
     okd4-control-plane-2 = "00:50:56:01:01:03"
     okd4-control-plane-3 = "00:50:56:01:01:04"
+  }
+  guest_name     = each.key
+  numvcpus       = "4"
+  memsize        = "16384" # in Mb
+  boot_disk_size = "120"   # in Gb
+  boot_disk_type = "thin"
+  disk_store     = var.datastore
+  guestos        = "fedora-64"
+  power          = "on"
+  virthwver      = "13"
+  clone_from_vm = "/Template-CentOS-8"
+
+  network_interfaces {
+    mac_address     = each.value
+    virtual_network = var.okd_network
+  }
+
+  depends_on = [null_resource.esxi_network]
+}
+
+resource "esxi_guest" "okd4-compute" {
+  for_each = {
     okd4-compute-1       = "00:50:56:01:01:05"
     okd4-compute-2       = "00:50:56:01:01:06"
   }
@@ -169,14 +202,16 @@ resource "esxi_guest" "okd4-machines" {
   boot_disk_type = "thin"
   disk_store     = var.datastore
   guestos        = "fedora-64"
-  power          = "off"
+  power          = "on"
   virthwver      = "13"
+  clone_from_vm = "/Template-CentOS-8"
 
   network_interfaces {
     mac_address     = each.value
     virtual_network = var.okd_network
   }
-  #depends_on = [null_resource.esxi_network]
+
+  depends_on = [null_resource.esxi_network]
 }
 
 resource "esxi_guest" "okd4-services" {
@@ -187,8 +222,9 @@ resource "esxi_guest" "okd4-services" {
   boot_disk_type = "thin"
   disk_store     = var.datastore
   guestos        = "centos-64"
-  power          = "off"
+  power          = "on"
   virthwver      = "13"
+  clone_from_vm = "/Template-CentOS-8"
 
   network_interfaces {
     mac_address     = "00:50:56:01:01:07"
@@ -200,7 +236,7 @@ resource "esxi_guest" "okd4-services" {
     virtual_network = var.home_network
   }
 
-  #depends_on = [null_resource.esxi_network]
+  depends_on = [null_resource.esxi_network]
 }
 
 resource "esxi_guest" "okd4-pfsense" {
@@ -211,8 +247,9 @@ resource "esxi_guest" "okd4-pfsense" {
   boot_disk_type = "thin"
   disk_store     = var.datastore
   guestos        = "freebsd-64"
-  power          = "off"
+  power          = "on"
   virthwver      = "13"
+  clone_from_vm = "/Template-CentOS-8"
 
   network_interfaces {
     mac_address     = "00:50:56:01:01:09"
@@ -224,5 +261,5 @@ resource "esxi_guest" "okd4-pfsense" {
     virtual_network = var.okd_network
   }
 
-  #depends_on = [null_resource.esxi_network]
+  depends_on = [null_resource.esxi_network]
 }
