@@ -68,7 +68,7 @@ resource "null_resource" "esxi_network" {
     when = destroy
     inline = [
       "echo Destroying up portgroup:${self.triggers.netname}, on ${self.triggers.switch}.",
-      "esxcli network vswitch standard portgroup remove --portgroup-name=${self.triggers.netname} --vswitch-name=${self.triggers.switch}",
+      # "esxcli network vswitch standard portgroup remove --portgroup-name=${self.triggers.netname} --vswitch-name=${self.triggers.switch}",
     ]
   }
 }
@@ -115,7 +115,7 @@ resource "esxi_guest" "okd4-bootstrap" {
   boot_disk_size = "120"   # in Gb
   boot_disk_type = "thin"
   disk_store     = var.datastore
-  guestos        = "fedora-64"
+  # guestos        = "centos7Guest"      # List: https://code.vmware.com/apis/358/vsphere/doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
   power          = "on"
   virthwver      = "13"
 
@@ -177,7 +177,7 @@ resource "esxi_guest" "okd4-control" {
   boot_disk_size = "120"   # in Gb
   boot_disk_type = "thin"
   disk_store     = var.datastore
-  guestos        = "fedora-64"
+  # guestos        = "centos7Guest"
   power          = "on"
   virthwver      = "13"
   clone_from_vm = "/Template-CentOS-8"
@@ -201,7 +201,7 @@ resource "esxi_guest" "okd4-compute" {
   boot_disk_size = "120"   # in Gb
   boot_disk_type = "thin"
   disk_store     = var.datastore
-  guestos        = "fedora-64"
+  # guestos        = "centos7Guest"
   power          = "on"
   virthwver      = "13"
   clone_from_vm = "/Template-CentOS-8"
@@ -221,7 +221,7 @@ resource "esxi_guest" "okd4-services" {
   boot_disk_size = "100"  # in Gb
   boot_disk_type = "thin"
   disk_store     = var.datastore
-  guestos        = "centos-64"
+  # guestos        = "centos7Guest"
   power          = "on"
   virthwver      = "13"
   clone_from_vm = "/Template-CentOS-8"
