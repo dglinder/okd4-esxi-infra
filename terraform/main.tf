@@ -85,28 +85,33 @@ output "guest_bootstrap" {
  value = esxi_guest.okd4-bootstrap.ip_address
 }
 
-# # generate inventory file for Ansible
-# resource "local_file" "hosts_cfg" {
-#  content = templatefile("${path.module}/hosts.tpl",
-#    {
-#      bootstrap_ip = esxi_guest.okd4-bootstrap.*.ip_address
-#      bootstrap_hn = esxi_guest.okd4-bootstrap.*.guest_name
-#      control_ip   = esxi_guest.okd4-control.*.ip_address
-#     #  control_hn   = esxi_guest.okd4-control.guest_name
-#      services_ip  = esxi_guest.okd4-services.*.ip_address
-#      services_hn  = esxi_guest.okd4-services.*.guest_name
-#      pfsense_ip   = esxi_guest.okd4-pfsense.*.ip_address
-#      pfsense_hn   = esxi_guest.okd4-pfsense.*.guest_name
-#    }
-#  )
-#  filename = "../hosts.cfg"
-#  depends_on = [
-#    esxi_guest.okd4-bootstrap,
-#    esxi_guest.okd4-control,
-#    esxi_guest.okd4-services,
-#    esxi_guest.okd4-pfsense
-#  ]
-# }
+# generate inventory file for Ansible
+resource "local_file" "hosts_cfg" {
+  # for_each = {
+  #   okd4-control-plane-1 = "00:50:56:01:01:02"
+  #   okd4-control-plane-2 = "00:50:56:01:01:03"
+  #   okd4-control-plane-3 = "00:50:56:01:01:04"
+  # }
+  content = templatefile("hosts.tpl",
+    {
+      bootstrap_ip = esxi_guest.okd4-bootstrap.ip_address
+      bootstrap_hn = esxi_guest.okd4-bootstrap.guest_name
+      # control_ip   = esxi_guest.okd4-control.*.ip_address
+      # control_hn   = esxi_guest.okd4-control.*.guest_name
+      # services_ip  = esxi_guest.okd4-services.*.ip_address
+      # services_hn  = esxi_guest.okd4-services.*.guest_name
+      pfsense_ip   = esxi_guest.okd4-pfsense.ip_address
+      pfsense_hn   = esxi_guest.okd4-pfsense.guest_name
+    }
+  )
+  filename = "../hosts.cfg"
+  depends_on = [
+    esxi_guest.okd4-bootstrap,
+    esxi_guest.okd4-control,
+    esxi_guest.okd4-services,
+    esxi_guest.okd4-pfsense
+  ]
+}
 
 resource "esxi_guest" "okd4-bootstrap" {
   guest_name     = "okd4-bootstrap"
