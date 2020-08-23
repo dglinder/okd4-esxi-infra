@@ -73,4 +73,17 @@ resource "esxi_guest" "multivm" {
     nic_type        = "vmxnet3"
     mac_address     = var.hn_to_okdmac["multivm-${count.index}"]
   }
+
+  provisioner "remote-exec" {
+    connection {
+      type  = "ssh"
+      user  = var.guest_vm_ssh_user
+      password = var.guest_vm_ssh_passwd
+      host  = self.ip_address
+    }
+    inline = [
+      "date | tee -a /tmp/gothere",
+      "echo Setting IP address:${var.hn_to_ip["multivm-${count.index}"]} on interface MAC:${var.hn_to_mac["multivm-${count.index}"]} | tee -a /tmp/gothere", 
+    ]
+  }
 }
