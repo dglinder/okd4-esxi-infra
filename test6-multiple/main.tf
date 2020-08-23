@@ -71,6 +71,6 @@ resource "esxi_guest" "multivm" {
   network_interfaces {
     virtual_network = var.home_network
     nic_type        = "vmxnet3"
-    mac_address     = var.hn_to_okdmac["multivm-0"]
+    mac_address     = var.hn_to_okdmac["multivm-${count.index}"]
   }
 }
