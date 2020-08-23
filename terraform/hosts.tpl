@@ -1,19 +1,9 @@
 [bootstrap]
-%{ for ip in bootstrap_ip ~}
-${ip}
-%{ endfor ~}
+${bootstrap_hn} ansible_host=${bootstrap_ip}
 
-[control_hosts]
-%{ for ip in control_ip ~}
-${ip}
-%{ endfor ~}
+[pfsense_host]
+${pfsense_hn} ansible_host=${pfsense_ip}
 
-[services_hosts]
-%{ for ip in services_ip ~}
-${ip}
-%{ endfor ~}
+[service_host]
+${services_hn} ansible_host=${services_ip}
 
-[pfsense_hosts]
-%{ for ip in pfsense_ip ~}
-${ip}
-%{ endfor ~}
