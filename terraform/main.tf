@@ -35,6 +35,9 @@ variable "okd_network" { type = string }
 variable "guest_vm_ssh_user" { type = string }
 variable "guest_vm_ssh_port" { type = number }
 variable "guest_vm_ssh_passwd" { type = string }
+variable "hn_to_ip" {
+  type = map
+}
 
 resource "null_resource" "esxi_network" {
   # These triggers are just a workaround to be able to use variables in the destroy provisioner
@@ -91,8 +94,8 @@ resource "local_file" "hosts_cfg" {
     {
       bootstrap_ip = esxi_guest.okd4-bootstrap.ip_address
       bootstrap_hn = esxi_guest.okd4-bootstrap.guest_name
-      # control_ip   = esxi_guest.okd4-control.*.ip_address
-      # control_hn   = esxi_guest.okd4-control.*.guest_name
+      control_ip   = esxi_guest.okd4-control["okd4-control-plane-1"].ip_address # esxi_guest.okd4-control.*.ip_address
+      control_hn   = esxi_guest.okd4-control["okd4-control-plane-1"].guest_name # esxi_guest.okd4-control.*.guest_name
       services_ip  = esxi_guest.okd4-services.ip_address
       services_hn  = esxi_guest.okd4-services.guest_name
       pfsense_ip   = esxi_guest.okd4-pfsense.ip_address
@@ -118,11 +121,13 @@ resource "esxi_guest" "okd4-bootstrap" {
   # guestos        = "centos7Guest"      # List: https://code.vmware.com/apis/358/vsphere/doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
   power          = "on"
   virthwver      = "13"
+  clone_from_vm = "/Template-CentOS-8"
 
   network_interfaces {
     mac_address     = "00:50:56:01:01:01"
     virtual_network = var.okd_network
     nic_type        = "vmxnet3"
+    ip_address      = hn_to_ip[okd4-bootstrap]
   }
 
   network_interfaces {
@@ -132,37 +137,7 @@ resource "esxi_guest" "okd4-bootstrap" {
   }
 
   notes = "Built using Terraform"
-  clone_from_vm = "/Template-CentOS-8"
   depends_on = [null_resource.esxi_network]
-
-  # provisioner "file" {
-  #   connection {
-  #     type  = "ssh"
-  #     user  = var.ssh_user
-  #     password = var.ssh_passwd
-  #     host  = self.ip_address
-  #   }
-
-  #   source = "script.sh"
-  #   destination = "/tmp/script.sh"
-  # }
-
-  # provisioner "remote-exec" {
-  #   connection {
-  #     type  = "ssh"
-  #     user  = var.ssh_user
-  #     password = var.ssh_passwd
-  #     host  = self.ip_address
-  #   }
-
-  #   inline = [
-  #     "date | tee -a /tmp/gothere",
-  #     "dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm",
-  #     "yum install -y ansible",
-  #     "chmod +x /tmp/script.sh",
-  #     "/tmp/script.sh",
-  #   ]
-  # }
 }
 
 resource "esxi_guest" "okd4-control" {
@@ -185,6 +160,8 @@ resource "esxi_guest" "okd4-control" {
   network_interfaces {
     mac_address     = each.value
     virtual_network = var.okd_network
+    nic_type        = "vmxnet3"
+    ip_address      = hn_to_ip[each.key]
   }
 
   depends_on = [null_resource.esxi_network]
@@ -209,6 +186,8 @@ resource "esxi_guest" "okd4-compute" {
   network_interfaces {
     mac_address     = each.value
     virtual_network = var.okd_network
+    nic_type        = "vmxnet3"
+    ip_address      = hn_to_ip[each.key]
   }
 
   depends_on = [null_resource.esxi_network]
@@ -229,11 +208,14 @@ resource "esxi_guest" "okd4-services" {
   network_interfaces {
     mac_address     = "00:50:56:01:01:07"
     virtual_network = var.okd_network
+    nic_type        = "vmxnet3"
+    ip_address      = hn_to_ip[self.guest_name]
   }
 
   network_interfaces {
     mac_address     = "00:50:56:01:01:08"
     virtual_network = var.home_network
+    nic_type        = "vmxnet3"
   }
 
   depends_on = [null_resource.esxi_network]
@@ -250,15 +232,18 @@ resource "esxi_guest" "okd4-pfsense" {
   power          = "on"
   virthwver      = "13"
   clone_from_vm = "/Template-CentOS-8"
+  ip_address      = hn_to_ip["okd4-pfsense"]
 
   network_interfaces {
     mac_address     = "00:50:56:01:01:09"
     virtual_network = var.home_network
+    nic_type        = "vmxnet3"
   }
 
   network_interfaces {
     mac_address     = "00:50:56:01:01:0A"
     virtual_network = var.okd_network
+    nic_type        = "vmxnet3"
   }
 
   depends_on = [null_resource.esxi_network]
