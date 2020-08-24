@@ -55,6 +55,10 @@ output "guest_multivm-1" {
  value = esxi_guest.multivm[1].ip_address
 }
 
+# output "guest_multivm-splat" {
+#  value = esxi_guest.multivm[1].ip_address
+# }
+
 resource "esxi_guest" "multivm" {
   guest_name     = "multivm-${count.index}"
   numvcpus       = "1"
@@ -66,7 +70,10 @@ resource "esxi_guest" "multivm" {
   virthwver      = "13"
   clone_from_vm = "/Template-CentOS-8"
   # ip_address      = var.hn_to_ip["multivm-0"]
-  count          = 2
+  count          = 3
+  # guestinfo      = {
+    # metadata = "multivm_group"
+  # }
 
   network_interfaces {
     virtual_network = var.home_network
@@ -74,6 +81,17 @@ resource "esxi_guest" "multivm" {
     mac_address     = var.hn_to_okdmac["multivm-${count.index}"]
   }
 
+  # provisioner "file" {
+    # connection {
+      # type  = "ssh"
+      # user  = var.guest_vm_ssh_user
+      # password = var.guest_vm_ssh_passwd
+      # host  = self.ip_address
+    # }
+    # source = "setup_ip.sh"
+    # destination = "/root/setup_ip.sh"
+  # }
+# 
   provisioner "remote-exec" {
     connection {
       type  = "ssh"
@@ -83,7 +101,10 @@ resource "esxi_guest" "multivm" {
     }
     inline = [
       "date | tee -a /tmp/gothere",
-      "echo Setting IP address:${var.hn_to_ip["multivm-${count.index}"]} on interface MAC:${var.hn_to_mac["multivm-${count.index}"]} | tee -a /tmp/gothere", 
+      "echo Setting IP address:${var.hn_to_ip["multivm-${count.index}"]} on interface MAC:${var.hn_to_okdmac["multivm-${count.index}"]} | tee -a /tmp/gothere", 
+      # "chmod +x /root/setup_ip.sh",
+      # "/root/setup_ip.sh ${var.hn_to_okdmac["multivm-${count.index}"]} ${var.hn_to_ip["multivm-${count.index}"]} 24 192.168.65.1 | tee -a /tmp/gothere",
+      # "sleep 30",   # So Terraform will have time to get the IP address
     ]
   }
 }
