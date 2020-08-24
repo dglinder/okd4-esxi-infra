@@ -87,3 +87,17 @@ resource "esxi_guest" "multivm" {
     ]
   }
 }
+
+resource "local_file" "AnsibleInventory" {
+ content = templatefile("hosts.tpl",
+ {
+  # bastion-dns = aws_eip.eip-bastion.public_dns,
+  # bastion-ip = aws_eip.eip-bastion.public_ip,
+  # bastion-id = aws_instance.bastion.id,
+  multivm-dns = esxi_guest.multivm.*.guest_name,
+  multivm-ip  = esxi_guest.multivm.*.ip_address,
+  multivm-id  = esxi_guest.multivm.*.id
+ }
+ )
+ filename = "inventory"
+}
