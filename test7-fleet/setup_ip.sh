@@ -34,27 +34,28 @@ echo "Setting ${IFNAME} to ${ADDR}/${ADDR_NM}, default gw ${GWADDR}"
 nmcli con mod ${IFNAME} ipv4.address ${ADDR}/${ADDR_NM}
 
 # Set the gateway
-nmcli con mod ${IFNAME} ipv4.gateway ${GWADDR} 2>&1 | tee -a /tmp/gothere
+nmcli con mod ${IFNAME} ipv4.gateway ${GWADDR}
 
 # Set to manual IPv4 (not DHCP)
-nmcli con mod ${IFNAME} ipv4.method manual 2>&1 | tee -a /tmp/gothere
+nmcli con mod ${IFNAME} ipv4.method manual
 
 # Set to autostart
-nmcli con mod ${IFNAME} autoconnect yes 2>&1 | tee -a /tmp/gothere
+nmcli con mod ${IFNAME} autoconnect yes
 
 # Restart the interface in the background
 # so Terraform can exit cleanly
 (
-  echo "$(date) - Waiting 30 seconds to restart NIC" 2>&1 | tee -a /tmp/gothere
+  echo "$(date) - #######################################"
+  echo "$(date) - Waiting 30 seconds to restart NIC"
   sleep 30
-  echo "$(date) - Down-ing ${IFNAME}" 2>&1 | tee -a /tmp/gothere
-  nmcli con down ${IFNAME} 2>&1 | tee -a /tmp/gothere
+  echo "$(date) - Down-ing ${IFNAME}"
+  nmcli con down ${IFNAME}
   sleep 1
-  echo "$(date) - Up-ing ${IFNAME}" 2>&1 | tee -a /tmp/gothere
-  nmcli con up ${IFNAME} 2>&1 | tee -a /tmp/gothere
-  echo "$(date) - NIC ${IFNAME} status: $(ip ad sh ${IFNAME})" 2>&1 | tee -a /tmp/gothere
-) &
+  echo "$(date) - Up-ing ${IFNAME}"
+  nmcli con up ${IFNAME}
+  echo "$(date) - NIC ${IFNAME} status: $(ip ad sh ${IFNAME})"
+  echo "$(date) - #######################################"
+) & disown
 
 echo "$(date) - Exiting script"
 exit 0
-
