@@ -63,7 +63,11 @@ resource "esxi_guest" "okd4-bootstrap" {
     mac_address     = var.hn_to_okdmac["okd4-bootstrap"]
     virtual_network = var.home_network
     nic_type        = "vmxnet3"
+    # NOTE: the ipv4_address/_gateway are not supported with esxi.
+    # Use the CloudInit or other options documented here:
+    #   https://github.com/josenk/terraform-provider-esxi-wiki
   }
+
   provisioner "file" {
     connection {
       type  = "ssh"
