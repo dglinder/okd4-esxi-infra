@@ -1,5 +1,9 @@
 #!/bin/bash
 # Call with MAC ADDR ADDR_NM GWADDR on command line
+
+# Capture all script output
+exec > /tmp/gothere 2>&1
+
 MAC="$1"
 ADDR="$2"
 ADDR_NM="$3"
