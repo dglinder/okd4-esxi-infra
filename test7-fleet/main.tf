@@ -89,6 +89,7 @@ resource "esxi_guest" "okd4-bootstrap" {
     inline = [
       "date | tee -a /tmp/gothere",
       "echo Setting IP address:${var.hn_to_ip["okd4-bootstrap"]} on interface MAC:${var.hn_to_okdmac["okd4-bootstrap"]} | tee -a /tmp/gothere", 
+      "/usr/bin/hostnamectl set-hostname okd4-bootstrap",
       "chmod +x /root/setup_ip.sh",
       "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-bootstrap"]} ${var.hn_to_ip["okd4-bootstrap"]} 24 192.168.65.1 | tee -a /tmp/gothere",
     ]
