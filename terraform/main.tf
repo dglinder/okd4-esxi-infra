@@ -54,7 +54,7 @@ resource "null_resource" "esxi_network" {
   connection {
     type  = "ssh"
     user  = "root"
-    password = "APassword"
+    password = "1234NewS!@#$"
     host  = "esx.lab.linder.org"
   }
 
