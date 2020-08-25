@@ -47,18 +47,6 @@ provider "esxi" {
   esxi_password = var.my_esxi_password
 }
 
-output "guest_multivm-0" {
- value = esxi_guest.multivm[0].ip_address
-}
-
-output "guest_multivm-1" {
- value = esxi_guest.multivm[1].ip_address
-}
-
-# output "guest_multivm-splat" {
-#  value = esxi_guest.multivm[1].ip_address
-# }
-
 resource "esxi_guest" "multivm" {
   guest_name     = "multivm-${count.index}"
   numvcpus       = "1"
