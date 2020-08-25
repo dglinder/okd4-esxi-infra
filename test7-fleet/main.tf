@@ -32,12 +32,10 @@ variable "okd_network" { type = string }
 variable "guest_vm_ssh_user" { type = string }
 variable "guest_vm_ssh_port" { type = number }
 variable "guest_vm_ssh_passwd" { type = string }
-variable "hn_to_ip" {
-  type = map
-}
-variable "hn_to_okdmac" {
-  type = map
-}
+variable "hn_to_ip" { type = map }
+variable "hn_to_okdmac" { type = map }
+variable "hn_to_nm" { type = map }
+variable "hn_to_gw" { type = map }
 
 provider "esxi" {
   esxi_hostname = var.my_esxi_hostname
