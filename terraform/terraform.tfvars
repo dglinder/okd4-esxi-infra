@@ -1,6 +1,6 @@
 my_esxi_hostname = "esx.lab.linder.org"
 my_esxi_username = "root"
-my_esxi_password = "APassword"
+my_esxi_password = "1234NewS!@#$"
 
 datastore = "datastore1" 
 vlan_id = 20
@@ -22,5 +22,3 @@ hn_to_ip = {
     okd4-services        = "192.168.1.210"
     okd4-pfsense         = "192.168.1.1"
   }
-
-
