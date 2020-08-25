@@ -62,9 +62,34 @@ resource "esxi_guest" "okd4-bootstrap" {
   }
 
   network_interfaces {
-    mac_address     = var.hn_to_okdmac["okd4-bootstrap"] #"00:50:56:01:01:01"
+    mac_address     = var.hn_to_okdmac["okd4-bootstrap"]
     virtual_network = var.home_network
     nic_type        = "vmxnet3"
+  }
+  provisioner "file" {
+    connection {
+      type  = "ssh"
+      user  = var.guest_vm_ssh_user
+      password = var.guest_vm_ssh_passwd
+      host  = self.ip_address
+    }
+    source = "setup_ip.sh"
+    destination = "/root/setup_ip.sh"
+  }
+
+  provisioner "remote-exec" {
+    connection {
+      type  = "ssh"
+      user  = var.guest_vm_ssh_user
+      password = var.guest_vm_ssh_passwd
+      host  = self.ip_address
+    }
+    inline = [
+      "date | tee -a /tmp/gothere",
+      "echo Setting IP address:${var.hn_to_ip["okd4-bootstrap"]} on interface MAC:${var.hn_to_okdmac["okd4-bootstrap"]} | tee -a /tmp/gothere", 
+      "chmod +x /root/setup_ip.sh",
+      "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-bootstrap"]} ${var.hn_to_ip["okd4-bootstrap"]} 24 192.168.65.1 | tee -a /tmp/gothere",
+    ]
   }
 }
 
@@ -131,17 +156,17 @@ resource "esxi_guest" "okd4-control-plane" {
     mac_address     = var.hn_to_okdmac["okd4-control-plane-${count.index}"]
   }
 
-  # provisioner "file" {
-    # connection {
-      # type  = "ssh"
-      # user  = var.guest_vm_ssh_user
-      # password = var.guest_vm_ssh_passwd
-      # host  = self.ip_address
-    # }
-    # source = "setup_ip.sh"
-    # destination = "/root/setup_ip.sh"
-  # }
-# 
+  provisioner "file" {
+    connection {
+      type  = "ssh"
+      user  = var.guest_vm_ssh_user
+      password = var.guest_vm_ssh_passwd
+      host  = self.ip_address
+    }
+    source = "setup_ip.sh"
+    destination = "/root/setup_ip.sh"
+  }
+
   provisioner "remote-exec" {
     connection {
       type  = "ssh"
@@ -152,9 +177,9 @@ resource "esxi_guest" "okd4-control-plane" {
     inline = [
       "date | tee -a /tmp/gothere",
       "echo Setting IP address:${var.hn_to_ip["okd4-control-plane-${count.index}"]} on interface MAC:${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} | tee -a /tmp/gothere", 
-      # "chmod +x /root/setup_ip.sh",
-      # "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} ${var.hn_to_ip["okd4-control-plane-${count.index}"]} 24 192.168.65.1 | tee -a /tmp/gothere",
-      # "sleep 30",   # So Terraform will have time to get the IP address
+      "chmod +x /root/setup_ip.sh",
+      "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} ${var.hn_to_ip["okd4-control-plane-${count.index}"]} 24 192.168.65.1 | tee -a /tmp/gothere",
+      "sleep 30",
     ]
   }
 }
