@@ -1,4 +1,4 @@
-# SINGLE
+# Fleet
 terraform {
   required_version = ">= 0.13"
   required_providers {
@@ -47,8 +47,8 @@ provider "esxi" {
   esxi_password = var.my_esxi_password
 }
 
-resource "esxi_guest" "multivm" {
-  guest_name     = "multivm-${count.index}"
+resource "esxi_guest" "okd4-bootstrap" {
+  guest_name     = "okd4-bootstrap"
   numvcpus       = "1"
   memsize        = "4096" # in Mb
   boot_disk_size = "120"   # in Gb
@@ -57,16 +57,78 @@ resource "esxi_guest" "multivm" {
   power          = "on"
   virthwver      = "13"
   clone_from_vm = "/Template-CentOS-8"
-  # ip_address      = var.hn_to_ip["multivm-0"]
+  guestinfo      = {
+    metadata = "okd4-bootstrap_group"
+  }
+
+  network_interfaces {
+    mac_address     = var.hn_to_okdmac["okd4-bootstrap"] #"00:50:56:01:01:01"
+    virtual_network = var.home_network
+    nic_type        = "vmxnet3"
+  }
+}
+
+resource "esxi_guest" "okd4-services" {
+  guest_name     = "okd4-services"
+  numvcpus       = "1"
+  memsize        = "4096" # in Mb
+  boot_disk_size = "120"   # in Gb
+  boot_disk_type = "thin"
+  disk_store     = var.datastore
+  power          = "on"
+  virthwver      = "13"
+  clone_from_vm = "/Template-CentOS-8"
+  guestinfo      = {
+    metadata = "okd4-services_group"
+  }
+
+  network_interfaces {
+    mac_address     = var.hn_to_okdmac["okd4-services"] #"00:50:56:01:01:01"
+    virtual_network = var.home_network
+    nic_type        = "vmxnet3"
+  }
+}
+
+resource "esxi_guest" "okd4-pfsense" {
+  guest_name     = "okd4-pfsense"
+  numvcpus       = "1"
+  memsize        = "4096" # in Mb
+  boot_disk_size = "120"   # in Gb
+  boot_disk_type = "thin"
+  disk_store     = var.datastore
+  power          = "on"
+  virthwver      = "13"
+  clone_from_vm = "/Template-CentOS-8"
+  guestinfo      = {
+    metadata = "okd4-pfsense_group"
+  }
+
+  network_interfaces {
+    mac_address     = var.hn_to_okdmac["okd4-pfsense"] #"00:50:56:01:01:01"
+    virtual_network = var.home_network
+    nic_type        = "vmxnet3"
+  }
+}
+
+resource "esxi_guest" "okd4-control-plane" {
+  guest_name     = "okd4-control-plane-${count.index}"
+  numvcpus       = "1"
+  memsize        = "4096" # in Mb
+  boot_disk_size = "120"   # in Gb
+  boot_disk_type = "thin"
+  disk_store     = var.datastore
+  power          = "on"
+  virthwver      = "13"
+  clone_from_vm = "/Template-CentOS-8"
   count          = 3
-  # guestinfo      = {
-    # metadata = "multivm_group"
-  # }
+  guestinfo      = {
+    metadata = "okd4-control-plane_group"
+  }
 
   network_interfaces {
     virtual_network = var.home_network
     nic_type        = "vmxnet3"
-    mac_address     = var.hn_to_okdmac["multivm-${count.index}"]
+    mac_address     = var.hn_to_okdmac["okd4-control-plane-${count.index}"]
   }
 
   # provisioner "file" {
@@ -89,9 +151,58 @@ resource "esxi_guest" "multivm" {
     }
     inline = [
       "date | tee -a /tmp/gothere",
-      "echo Setting IP address:${var.hn_to_ip["multivm-${count.index}"]} on interface MAC:${var.hn_to_okdmac["multivm-${count.index}"]} | tee -a /tmp/gothere", 
+      "echo Setting IP address:${var.hn_to_ip["okd4-control-plane-${count.index}"]} on interface MAC:${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} | tee -a /tmp/gothere", 
       # "chmod +x /root/setup_ip.sh",
-      # "/root/setup_ip.sh ${var.hn_to_okdmac["multivm-${count.index}"]} ${var.hn_to_ip["multivm-${count.index}"]} 24 192.168.65.1 | tee -a /tmp/gothere",
+      # "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} ${var.hn_to_ip["okd4-control-plane-${count.index}"]} 24 192.168.65.1 | tee -a /tmp/gothere",
+      # "sleep 30",   # So Terraform will have time to get the IP address
+    ]
+  }
+}
+
+resource "esxi_guest" "okd4-compute" {
+  guest_name     = "okd4-compute-${count.index}"
+  numvcpus       = "1"
+  memsize        = "4096" # in Mb
+  boot_disk_size = "120"   # in Gb
+  boot_disk_type = "thin"
+  disk_store     = var.datastore
+  power          = "on"
+  virthwver      = "13"
+  clone_from_vm = "/Template-CentOS-8"
+  count          = 2
+  # guestinfo      = {
+  #   metadata = "okd4-compute_group"
+  # }
+
+  network_interfaces {
+    virtual_network = var.home_network
+    nic_type        = "vmxnet3"
+    mac_address     = var.hn_to_okdmac["okd4-compute-${count.index}"]
+  }
+
+  # provisioner "file" {
+    # connection {
+      # type  = "ssh"
+      # user  = var.guest_vm_ssh_user
+      # password = var.guest_vm_ssh_passwd
+      # host  = self.ip_address
+    # }
+    # source = "setup_ip.sh"
+    # destination = "/root/setup_ip.sh"
+  # }
+# 
+  provisioner "remote-exec" {
+    connection {
+      type  = "ssh"
+      user  = var.guest_vm_ssh_user
+      password = var.guest_vm_ssh_passwd
+      host  = self.ip_address
+    }
+    inline = [
+      "date | tee -a /tmp/gothere",
+      "echo Setting IP address:${var.hn_to_ip["okd4-control-plane-${count.index}"]} on interface MAC:${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} | tee -a /tmp/gothere", 
+      # "chmod +x /root/setup_ip.sh",
+      # "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} ${var.hn_to_ip["okd4-control-plane-${count.index}"]} 24 192.168.65.1 | tee -a /tmp/gothere",
       # "sleep 30",   # So Terraform will have time to get the IP address
     ]
   }
@@ -100,12 +211,25 @@ resource "esxi_guest" "multivm" {
 resource "local_file" "AnsibleInventory" {
  content = templatefile("hosts.tpl",
  {
-  # bastion-dns = aws_eip.eip-bastion.public_dns,
-  # bastion-ip = aws_eip.eip-bastion.public_ip,
-  # bastion-id = aws_instance.bastion.id,
-  multivm-dns = esxi_guest.multivm.*.guest_name,
-  multivm-ip  = esxi_guest.multivm.*.ip_address,
-  multivm-id  = esxi_guest.multivm.*.id
+  okd4-bootstrap-dns     = esxi_guest.okd4-bootstrap.guest_name,
+  okd4-bootstrap-ip      = esxi_guest.okd4-bootstrap.ip_address,
+  okd4-bootstrap-id      = esxi_guest.okd4-bootstrap.id,
+
+  okd4-services-dns      = esxi_guest.okd4-services.guest_name,
+  okd4-services-ip       = esxi_guest.okd4-services.ip_address,
+  okd4-services-id       = esxi_guest.okd4-services.id,
+
+  okd4-pfsense-dns       = esxi_guest.okd4-pfsense.guest_name,
+  okd4-pfsense-ip        = esxi_guest.okd4-pfsense.ip_address,
+  okd4-pfsense-id        = esxi_guest.okd4-pfsense.id,
+
+  okd4-control-plane-dns = esxi_guest.okd4-control-plane.*.guest_name,
+  okd4-control-plane-ip  = esxi_guest.okd4-control-plane.*.ip_address,
+  okd4-control-plane-id  = esxi_guest.okd4-control-plane.*.id
+
+  okd4-compute-dns       = esxi_guest.okd4-compute.*.guest_name,
+  okd4-compute-ip        = esxi_guest.okd4-compute.*.ip_address,
+  okd4-compute-id        = esxi_guest.okd4-compute.*.id
  }
  )
  filename = "inventory"
