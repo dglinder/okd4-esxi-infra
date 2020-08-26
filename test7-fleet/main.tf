@@ -54,6 +54,7 @@ resource "esxi_guest" "okd4-bootstrap" {
   disk_store     = var.datastore
   power          = "on"
   virthwver      = "13"
+  #guestos        = "centos8_64Guest" # "centos8_64Guest" or "rhel8_64Guest" from https://vdc-download.vmware.com/vmwb-repository/dcr-public/da47f910-60ac-438b-8b9b-6122f4d14524/16b7274a-bf8b-4b4c-a05e-746f2aa93c8c/doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
   clone_from_vm = "/Template-CentOS-8"
   guestinfo      = {
     metadata = "okd4-bootstrap_group"
@@ -87,11 +88,12 @@ resource "esxi_guest" "okd4-bootstrap" {
       host  = self.ip_address
     }
     inline = [
-      "date | tee -a /tmp/gothere",
-      "echo Setting IP address:${var.hn_to_ip["okd4-bootstrap"]} on interface MAC:${var.hn_to_okdmac["okd4-bootstrap"]} | tee -a /tmp/gothere", 
+      "date | tee -a /tmp/gothere.0",
+      "echo Setting IP address:${var.hn_to_ip["okd4-bootstrap"]} on interface MAC:${var.hn_to_okdmac["okd4-bootstrap"]} | tee -a /tmp/gothere.0", 
       "/usr/bin/hostnamectl set-hostname okd4-bootstrap",
       "chmod +x /root/setup_ip.sh",
-      "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-bootstrap"]} ${var.hn_to_ip["okd4-bootstrap"]} 24 192.168.65.1 | tee -a /tmp/gothere",
+      "echo remote-exec note: Wed Aug 26 18:09:42 UTC 2020",
+      "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-bootstrap"]} ${var.hn_to_ip["okd4-bootstrap"]} 24 192.168.65.1 | tee -a /tmp/gothere.0",
     ]
   }
 }
