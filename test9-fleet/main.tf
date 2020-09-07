@@ -34,6 +34,7 @@ variable "guest_vm_ssh_port" { type = number }
 variable "guest_vm_ssh_passwd" { type = string }
 variable "hn_to_ip" { type = map }
 variable "hn_to_okdmac" { type = map }
+variable "hn_to_homemac" { type = map }
 variable "hn_to_nm" { type = map }
 variable "hn_to_gw" { type = map }
 
@@ -47,8 +48,8 @@ provider "esxi" {
 
 resource "esxi_guest" "okd4-bootstrap" {
   guest_name     = "okd4-bootstrap"
-  numvcpus       = "1"
-  memsize        = "4096" # in Mb
+  numvcpus       = "4"
+  memsize        = "16384" # in Mb
   boot_disk_size = "120"   # in Gb
   boot_disk_type = "thin"
   disk_store     = var.datastore
@@ -69,38 +70,38 @@ resource "esxi_guest" "okd4-bootstrap" {
     #   https://github.com/josenk/terraform-provider-esxi-wiki
   }
 
-  provisioner "file" {
-    connection {
-      type  = "ssh"
-      user  = var.guest_vm_ssh_user
-      password = var.guest_vm_ssh_passwd
-      host  = self.ip_address
-    }
-    source = "setup_ip.sh"
-    destination = "/root/setup_ip.sh"
-  }
+  # provisioner "file" {
+  #   connection {
+  #     type  = "ssh"
+  #     user  = var.guest_vm_ssh_user
+  #     password = var.guest_vm_ssh_passwd
+  #     host  = self.ip_address
+  #   }
+  #   source = "setup_ip.sh"
+  #   destination = "/root/setup_ip.sh"
+  # }
 
-  provisioner "remote-exec" {
-    connection {
-      type  = "ssh"
-      user  = var.guest_vm_ssh_user
-      password = var.guest_vm_ssh_passwd
-      host  = self.ip_address
-    }
-    inline = [
-      "date | tee -a /tmp/gothere.0",
-      "echo Setting IP address:${var.hn_to_ip["okd4-bootstrap"]} on interface MAC:${var.hn_to_okdmac["okd4-bootstrap"]} | tee -a /tmp/gothere.0", 
-      "/usr/bin/hostnamectl set-hostname okd4-bootstrap",
-      "chmod +x /root/setup_ip.sh",
-      "echo remote-exec note: Wed Aug 26 18:09:42 UTC 2020",
-      "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-bootstrap"]} ${var.hn_to_ip["okd4-bootstrap"]} 24 192.168.65.1 | tee -a /tmp/gothere.0",
-    ]
-  }
+  # provisioner "remote-exec" {
+  #   connection {
+  #     type  = "ssh"
+  #     user  = var.guest_vm_ssh_user
+  #     password = var.guest_vm_ssh_passwd
+  #     host  = self.ip_address
+  #   }
+  #   inline = [
+  #     "date | tee -a /tmp/gothere.0",
+  #     "echo Setting IP address:${var.hn_to_ip["okd4-bootstrap"]} on interface MAC:${var.hn_to_okdmac["okd4-bootstrap"]} | tee -a /tmp/gothere.0", 
+  #     "/usr/bin/hostnamectl set-hostname okd4-bootstrap",
+  #     "chmod +x /root/setup_ip.sh",
+  #     "echo remote-exec note: Wed Aug 26 18:09:42 UTC 2020",
+  #     "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-bootstrap"]} ${var.hn_to_ip["okd4-bootstrap"]} 24 192.168.65.1 | tee -a /tmp/gothere.0",
+  #   ]
+  # }
 }
 
 resource "esxi_guest" "okd4-services" {
   guest_name     = "okd4-services"
-  numvcpus       = "1"
+  numvcpus       = "4"
   memsize        = "4096" # in Mb
   boot_disk_size = "120"   # in Gb
   boot_disk_type = "thin"
@@ -129,8 +130,8 @@ resource "esxi_guest" "okd4-services" {
 resource "esxi_guest" "okd4-pfsense" {
   guest_name     = "okd4-pfsense"
   numvcpus       = "1"
-  memsize        = "4096" # in Mb
-  boot_disk_size = "120"   # in Gb
+  memsize        = "1024" # in Mb
+  boot_disk_size = "8"   # in Gb
   boot_disk_type = "thin"
   disk_store     = var.datastore
   power          = "on"
@@ -157,8 +158,8 @@ resource "esxi_guest" "okd4-pfsense" {
 
 resource "esxi_guest" "okd4-control-plane" {
   guest_name     = "okd4-control-plane-${count.index}"
-  numvcpus       = "1"
-  memsize        = "4096" # in Mb
+  numvcpus       = "4"
+  memsize        = "16384" # in Mb
   boot_disk_size = "120"   # in Gb
   boot_disk_type = "thin"
   disk_store     = var.datastore
@@ -176,38 +177,38 @@ resource "esxi_guest" "okd4-control-plane" {
     mac_address     = var.hn_to_okdmac["okd4-control-plane-${count.index}"]
   }
 
-  provisioner "file" {
-    connection {
-      type  = "ssh"
-      user  = var.guest_vm_ssh_user
-      password = var.guest_vm_ssh_passwd
-      host  = self.ip_address
-    }
-    source = "setup_ip.sh"
-    destination = "/root/setup_ip.sh"
-  }
+  # provisioner "file" {
+  #   connection {
+  #     type  = "ssh"
+  #     user  = var.guest_vm_ssh_user
+  #     password = var.guest_vm_ssh_passwd
+  #     host  = self.ip_address
+  #   }
+  #   source = "setup_ip.sh"
+  #   destination = "/root/setup_ip.sh"
+  # }
 
-  provisioner "remote-exec" {
-    connection {
-      type  = "ssh"
-      user  = var.guest_vm_ssh_user
-      password = var.guest_vm_ssh_passwd
-      host  = self.ip_address
-    }
-    inline = [
-      "date | tee -a /tmp/gothere",
-      "echo Setting IP address:${var.hn_to_ip["okd4-control-plane-${count.index}"]} on interface MAC:${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} | tee -a /tmp/gothere", 
-      "chmod +x /root/setup_ip.sh",
-      "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} ${var.hn_to_ip["okd4-control-plane-${count.index}"]} 24 192.168.65.1 | tee -a /tmp/gothere",
-      "sleep 30",
-    ]
-  }
+  # provisioner "remote-exec" {
+  #   connection {
+  #     type  = "ssh"
+  #     user  = var.guest_vm_ssh_user
+  #     password = var.guest_vm_ssh_passwd
+  #     host  = self.ip_address
+  #   }
+  #   inline = [
+  #     "date | tee -a /tmp/gothere",
+  #     "echo Setting IP address:${var.hn_to_ip["okd4-control-plane-${count.index}"]} on interface MAC:${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} | tee -a /tmp/gothere", 
+  #     "chmod +x /root/setup_ip.sh",
+  #     "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} ${var.hn_to_ip["okd4-control-plane-${count.index}"]} 24 192.168.65.1 | tee -a /tmp/gothere",
+  #     "sleep 30",
+  #   ]
+  # }
 }
 
 resource "esxi_guest" "okd4-compute" {
   guest_name     = "okd4-compute-${count.index}"
-  numvcpus       = "1"
-  memsize        = "4096" # in Mb
+  numvcpus       = "4"
+  memsize        = "16384" # in Mb
   boot_disk_size = "120"   # in Gb
   boot_disk_type = "thin"
   disk_store     = var.datastore
@@ -226,31 +227,31 @@ resource "esxi_guest" "okd4-compute" {
   }
 
   # provisioner "file" {
-    # connection {
-      # type  = "ssh"
-      # user  = var.guest_vm_ssh_user
-      # password = var.guest_vm_ssh_passwd
-      # host  = self.ip_address
-    # }
-    # source = "setup_ip.sh"
-    # destination = "/root/setup_ip.sh"
+  #   connection {
+  #     type  = "ssh"
+  #     user  = var.guest_vm_ssh_user
+  #     password = var.guest_vm_ssh_passwd
+  #     host  = self.ip_address
+  #   }
+  #   source = "setup_ip.sh"
+  #   destination = "/root/setup_ip.sh"
   # }
 # 
-  provisioner "remote-exec" {
-    connection {
-      type  = "ssh"
-      user  = var.guest_vm_ssh_user
-      password = var.guest_vm_ssh_passwd
-      host  = self.ip_address
-    }
-    inline = [
-      "date | tee -a /tmp/gothere",
-      "echo Setting IP address:${var.hn_to_ip["okd4-control-plane-${count.index}"]} on interface MAC:${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} | tee -a /tmp/gothere", 
-      # "chmod +x /root/setup_ip.sh",
-      # "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} ${var.hn_to_ip["okd4-control-plane-${count.index}"]} 24 192.168.65.1 | tee -a /tmp/gothere",
-      # "sleep 30",   # So Terraform will have time to get the IP address
-    ]
-  }
+  # provisioner "remote-exec" {
+  #   connection {
+  #     type  = "ssh"
+  #     user  = var.guest_vm_ssh_user
+  #     password = var.guest_vm_ssh_passwd
+  #     host  = self.ip_address
+  #   }
+  #   inline = [
+  #     "date | tee -a /tmp/gothere",
+  #     "echo Setting IP address:${var.hn_to_ip["okd4-control-plane-${count.index}"]} on interface MAC:${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} | tee -a /tmp/gothere", 
+  #     # "chmod +x /root/setup_ip.sh",
+  #     # "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-control-plane-${count.index}"]} ${var.hn_to_ip["okd4-control-plane-${count.index}"]} 24 192.168.65.1 | tee -a /tmp/gothere",
+  #     # "sleep 30",   # So Terraform will have time to get the IP address
+  #   ]
+  # }
 }
 
 resource "local_file" "AnsibleInventory" {

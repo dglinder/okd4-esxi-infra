@@ -54,10 +54,11 @@ resource "esxi_guest" "okd4-bootstrap" {
   disk_store     = var.datastore
   power          = "on"
   virthwver      = "13"
-  #guestos        = "centos8_64Guest" # "centos8_64Guest" or "rhel8_64Guest" from https://vdc-download.vmware.com/vmwb-repository/dcr-public/da47f910-60ac-438b-8b9b-6122f4d14524/16b7274a-bf8b-4b4c-a05e-746f2aa93c8c/doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
-  clone_from_vm = "/Template-CentOS-8"
+  clone_from_vm = "/Template-CentOS-7" # This needs: cloud-init, open-vm-tools
   guestinfo      = {
-    metadata = "okd4-bootstrap_group"
+    #metadata = "okd4-bootstrap_group"
+    "metadata" = base64gzip(file("cloud-init/okd4-bootstrap.cloud-init.cfg"))
+    "metadata.encoding" = "gzip+base64"
   }
 
   network_interfaces {
@@ -67,35 +68,37 @@ resource "esxi_guest" "okd4-bootstrap" {
     # NOTE: the ipv4_address/_gateway are not supported with esxi.
     # Use the CloudInit or other options documented here:
     #   https://github.com/josenk/terraform-provider-esxi-wiki
+    #   https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/cloudinit_config
+    #   https://cloudinit.readthedocs.io/en/latest/topics/network-config.html
   }
 
-  provisioner "file" {
-    connection {
-      type  = "ssh"
-      user  = var.guest_vm_ssh_user
-      password = var.guest_vm_ssh_passwd
-      host  = self.ip_address
-    }
-    source = "setup_ip.sh"
-    destination = "/root/setup_ip.sh"
-  }
+#  provisioner "file" {
+#    connection {
+#      type  = "ssh"
+#      user  = var.guest_vm_ssh_user
+#      password = var.guest_vm_ssh_passwd
+#      host  = self.ip_address
+#    }
+#    source = "setup_ip.sh"
+#    destination = "/root/setup_ip.sh"
+#  }
 
-  provisioner "remote-exec" {
-    connection {
-      type  = "ssh"
-      user  = var.guest_vm_ssh_user
-      password = var.guest_vm_ssh_passwd
-      host  = self.ip_address
-    }
-    inline = [
-      "date | tee -a /tmp/gothere.0",
-      "echo Setting IP address:${var.hn_to_ip["okd4-bootstrap"]} on interface MAC:${var.hn_to_okdmac["okd4-bootstrap"]} | tee -a /tmp/gothere.0", 
-      "/usr/bin/hostnamectl set-hostname okd4-bootstrap",
-      "chmod +x /root/setup_ip.sh",
-      "echo remote-exec note: Wed Aug 26 18:09:42 UTC 2020",
-      "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-bootstrap"]} ${var.hn_to_ip["okd4-bootstrap"]} 24 192.168.65.1 | tee -a /tmp/gothere.0",
-    ]
-  }
+#  provisioner "remote-exec" {
+#    connection {
+#      type  = "ssh"
+#      user  = var.guest_vm_ssh_user
+#      password = var.guest_vm_ssh_passwd
+#      host  = self.ip_address
+#    }
+#    inline = [
+#      "date | tee -a /tmp/gothere.0",
+#      "echo Setting IP address:${var.hn_to_ip["okd4-bootstrap"]} on interface MAC:${var.hn_to_okdmac["okd4-bootstrap"]} | tee -a /tmp/gothere.0", 
+#      "/usr/bin/hostnamectl set-hostname okd4-bootstrap",
+#      "chmod +x /root/setup_ip.sh",
+#      "echo remote-exec note: Wed Aug 26 18:09:42 UTC 2020",
+#      "/root/setup_ip.sh ${var.hn_to_okdmac["okd4-bootstrap"]} ${var.hn_to_ip["okd4-bootstrap"]} 24 192.168.65.1 | tee -a /tmp/gothere.0",
+#    ]
+#  }
 }
 
 resource "esxi_guest" "okd4-services" {
